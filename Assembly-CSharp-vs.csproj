@@ -51,6 +51,7 @@
      <Compile Include="Assets\HealthBar.cs" />
      <Compile Include="Assets\Player.cs" />
      <Compile Include="Assets\PlayerController.cs" />
+     <Compile Include="Assets\SceneController.cs" />
      <Compile Include="Assets\hitboxController.cs" />
      <Compile Include="Assets\range.cs" />
      <None Include="Assets\Standard Assets\Skyboxes\_skybox info.txt" />

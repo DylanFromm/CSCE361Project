@@ -97,10 +97,10 @@ public class PlayerController : MonoBehaviour {
 					} 
 					// down
 					else {
-						damage = 0;
-						force = new Vector2(0f, 0f);
-						Vector2 endPoint = new Vector2(0f, 0f);
-						Vector2 startPoint = new Vector2(0f, 0f);
+						damage = 5;
+						force = new Vector2(2000f, 2000f);
+						Vector2 endPoint = new Vector2(transform.position.x + 12f, transform.position.y);
+						Vector2 startPoint = transform.position;
 						endRange.SendMessage("setPos", endPoint);
 						startRange.SendMessage("setPos", startPoint);
 
@@ -123,10 +123,10 @@ public class PlayerController : MonoBehaviour {
 						startRange.SendMessage("setPos", startPoint);
 					} 
 					else {
-						damage = 0;
-						force = new Vector2(0f, 0f);
-						Vector2 endPoint = new Vector2(0f, 0f);
-						Vector2 startPoint = new Vector2(0f, 0f);
+						damage = 5;
+						force = new Vector2(2000f, 2000f);
+						Vector2 endPoint = new Vector2(transform.position.x + 12f * direction, transform.position.y);
+						Vector2 startPoint = transform.position;
 						endRange.SendMessage("setPos", endPoint);
 						startRange.SendMessage("setPos", startPoint);
 					}
@@ -135,7 +135,7 @@ public class PlayerController : MonoBehaviour {
 			
 			RaycastHit2D castHit = Physics2D.Linecast (startRange.position, endRange.position, 1 << LayerMask.NameToLayer("Player " + otherNumber));
 			if (castHit && castHit.collider.gameObject.name.Contains ("Player")) {
-				castHit.rigidbody.AddForce (force);
+				castHit.rigidbody.AddForce (force * direction);
 				castHit.rigidbody.gameObject.SendMessage("damage", damage);
 			}
 		}
@@ -251,7 +251,7 @@ public class PlayerController : MonoBehaviour {
 		animationController.SetFloat ("Y_vel", Mathf.Abs(rigidbody2D.velocity.y));
 		c_stick = new Vector3 (Input.GetAxis ("Control_X"), Input.GetAxis ("Control_Y"));
 		if (frameBuffer == 0) {
-			if (Input.GetKeyDown("joystick " + number + " button 16")) {
+			if (Input.GetKeyDown("joystick " + number + " button 16") || Input.GetKeyDown(KeyCode.A)) {
 				state += "attack ";
 				frameBuffer = 20;
 				if (input.y > 0.5) {
