@@ -26,6 +26,7 @@ public class Blast : MonoBehaviour {
 	void OnCollisionEnter2D (Collision2D col) {
 		if (col.gameObject.name.Contains("Player")) {
 			if (number != col.gameObject.GetComponent<PlayerController> ().number) {
+				col.gameObject.SendMessage("damage", 5);
 				col.gameObject.rigidbody2D.AddForce (5000 * Vector2.right * direction);
 				Destroy (gameObject);
 			}

@@ -24,7 +24,7 @@ public class HealthBar : MonoBehaviour {
 	void OnGUI() {
 		if (name.Contains("1")) {
 			GUI.Box(new Rect(10, 10, barLength, 20), curHealth + "");
-		} else {
+		} else if (name.Contains("2")) {
 			GUI.Box(new Rect(Screen.width / 2, 10, barLength, 20), curHealth + "");
 		}
 	}

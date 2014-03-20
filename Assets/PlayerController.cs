@@ -18,7 +18,7 @@ public class PlayerController : MonoBehaviour {
 
 	public float health = 100;
 
-	string state;
+	public string state;
 
 	// flag variables
 	bool jumping;
@@ -56,96 +56,13 @@ public class PlayerController : MonoBehaviour {
 		        //    new Quaternion(transform.rotation.x, 1, transform.rotation.z, transform.rotation.w));
 	}
 
-	void check_collision(string state_) {
-		Vector2 force = Vector2.zero;
-		float damage = 0;
-		if (state_ != "") {
-			Debug.DrawLine (startRange.position, endRange.position, Color.red);
-			//hit = Physics2D.Linecast (startRange.position, endRange.position);
-			string otherNumber;
-			if (number == 1) {
-				otherNumber = "2";
-			} else {
-				otherNumber = "1";
-			}
 
-			if (state.Contains("attack")) {
-				if (state.Contains("jump")) {
-					if (state.Contains("forward")) {
-						damage = 5;
-						force = new Vector2(2000f, 2000f);
-						Vector2 endPoint = (Vector2)transform.position + new Vector2(12f, 0f);
-						Vector2 startPoint = transform.position;
-						endRange.SendMessage("setPos", endPoint);
-						startRange.SendMessage("setPos", startPoint);
-					} 
-					else if (state.Contains("back")) {
-						damage = 0;
-						force = new Vector2(0f, 0f);
-						Vector2 endPoint = new Vector2(0f, 0f);
-						Vector2 startPoint = new Vector2(0f, 0f);
-						endRange.SendMessage("setPos", endPoint);
-						startRange.SendMessage("setPos", startPoint);
-					} 
-					else if (state.Contains("up")) {
-						damage = 0;
-						force = new Vector2(0f, 0f);
-						Vector2 endPoint = new Vector2(0f, 0f);
-						Vector2 startPoint = new Vector2(0f, 0f);
-						endRange.SendMessage("setPos", endPoint);
-						startRange.SendMessage("setPos", startPoint);
-					} 
-					// down
-					else {
-						damage = 5;
-						force = new Vector2(2000f, 2000f);
-						Vector2 endPoint = new Vector2(transform.position.x + 12f, transform.position.y);
-						Vector2 startPoint = transform.position;
-						endRange.SendMessage("setPos", endPoint);
-						startRange.SendMessage("setPos", startPoint);
-
-					}
-				} else {
-					if (state.Contains("forward")) {
-						damage = 0;
-						force = new Vector2(0f, 0f);
-						Vector2 endPoint = new Vector2(0f, 0f);
-						Vector2 startPoint = new Vector2(0f, 0f);
-						endRange.SendMessage("setPos", endPoint);
-						startRange.SendMessage("setPos", startPoint);
-					} 
-					else if (state.Contains("up")) {
-						damage = 0;
-						force = new Vector2(0f, 0f);
-						Vector2 endPoint = new Vector2(0f, 0f);
-						Vector2 startPoint = new Vector2(0f, 0f);
-						endRange.SendMessage("setPos", endPoint);
-						startRange.SendMessage("setPos", startPoint);
-					} 
-					else {
-						damage = 5;
-						force = new Vector2(2000f, 2000f);
-						Vector2 endPoint = new Vector2(transform.position.x + 12f * direction, transform.position.y);
-						Vector2 startPoint = transform.position;
-						endRange.SendMessage("setPos", endPoint);
-						startRange.SendMessage("setPos", startPoint);
-					}
-				}
-			}
-			
-			RaycastHit2D castHit = Physics2D.Linecast (startRange.position, endRange.position, 1 << LayerMask.NameToLayer("Player " + otherNumber));
-			if (castHit && castHit.collider.gameObject.name.Contains ("Player")) {
-				castHit.rigidbody.AddForce (force * direction);
-				castHit.rigidbody.gameObject.SendMessage("damage", damage);
-			}
-		}
-	}
 	
 	void Update() {
+		Debug.DrawLine (startRange.position, endRange.position, Color.red);
 		if (health <= 0) {
 			// run death script		
 		}
-		Debug.DrawLine (startRange.position, endRange.position, Color.red);
 		state = "";
 		if (frameBuffer == 0) {
 			take_input();
@@ -220,8 +137,10 @@ public class PlayerController : MonoBehaviour {
 			canJump = false;
 			rigidbody2D.AddForce(Vector2.up * 6000);
 			animationController.SetBool("Landed", false);
-			state += "jump ";
 		}
+
+		if (Mathf.Abs(input.x) < 0.2) 
+			input.x = 0;
 		
 		// horizontal movement
 		float true_speed = speed * input.x;
@@ -247,27 +166,40 @@ public class PlayerController : MonoBehaviour {
 	 * Sets the animation flags for the Animator compontent
 	 */
 	void update_state() {
+
+		if (!canJump) {
+			state += " jump ";
+		}
+
+
 		animationController.SetFloat ("Speed", Mathf.Abs(input.x));
 		animationController.SetFloat ("Y_vel", Mathf.Abs(rigidbody2D.velocity.y));
 		c_stick = new Vector3 (Input.GetAxis ("Control_X"), Input.GetAxis ("Control_Y"));
 		if (frameBuffer == 0) {
-			if (Input.GetKeyDown("joystick " + number + " button 16") || Input.GetKeyDown(KeyCode.A)) {
-				state += "attack ";
+			if (Input.GetKeyDown("joystick " + number + " button 16")) {
+				state += " attack ";
 				frameBuffer = 20;
-				if (input.y > 0.5) {
-					animationController.SetInteger("y_input", 1);
-					animationController.SetBool("attacking", true);
-					state += "up ";
-				}
-				else if ((input.x < -0.5 && direction == 1) || (input.x > 0.5 && direction == -1)) {
+
+				if ((input.x < -0.5 && direction == 1)) {
 					animationController.SetBool("attacking", true);
 					animationController.SetInteger("x_input", -1);
-					state += "back ";
+					state += " back ";
+				} 
+				else if (input.x > 0.5 && (direction == -1)) {
+						animationController.SetBool("attacking", true);
+						animationController.SetInteger("x_input", -1);
+						state += " back ";
 				}
 				else if ((input.x > 0.5 && direction == 1) || (input.x < -0.5 && direction == -1)) {
 					animationController.SetBool("attacking", true);
 					animationController.SetInteger("x_input", 1);
-					state += "forward";
+					state += " forward ";
+				}
+				else if (input.y > 0.5) {
+					animationController.SetInteger("y_input", 1);
+					animationController.SetBool("attacking", true);
+					state += " up ";
+					
 				}
 				// down state
 				else {
@@ -286,11 +218,18 @@ public class PlayerController : MonoBehaviour {
 					frameBuffer = 20;
 					animationController.SetBool("attacking", true);
 					animationController.SetInteger("x_input", -1);
+
+					state += " back ";
+					Vector2 endPoint = (Vector2)transform.position +  new Vector2(-12f * direction, -8f);
+					Vector2 startPoint = (Vector2)transform.position + new Vector2(0f, -2f);
+					endRange.SendMessage("setPos", endPoint);
+					startRange.SendMessage("setPos", startPoint);
 				}
 				else if ((c_stick.x > 0.5 && direction == 1) || (c_stick.x < -0.5 && direction == -1)) {
 					frameBuffer = 20;
 					animationController.SetBool("attacking", true);
 					animationController.SetInteger("x_input", 1);
+					state += "forward";	
 				}
 				
 			} else if (frameBuffer == 0) {
@@ -337,4 +276,93 @@ public class PlayerController : MonoBehaviour {
 			health = 0;
 		}
 	}
+
+	void check_collision(string state_) {
+		Vector2 force = Vector2.zero;
+		float damage = 0;
+		if (state_ != "") {
+			
+			//hit = Physics2D.Linecast (startRange.position, endRange.position);
+			string otherNumber;
+			if (number == 1) {
+				otherNumber = "2";
+			} else {
+				otherNumber = "1";
+			}
+			
+			if (state.Contains("attack")) {
+				if (state.Contains("jump")) {
+					if (state.Contains("forward")) {
+						damage = 5;
+						force = new Vector2(2000f, 2000f);
+						Vector2 endPoint = (Vector2)transform.position +  new Vector2(-12f * -direction, -8f);
+						Vector2 startPoint = (Vector2)transform.position + new Vector2(0f, -2f);
+						endRange.SendMessage("setPos", endPoint);
+						startRange.SendMessage("setPos", startPoint);
+					} 
+					else if (state.Contains("back")) {
+						damage = 5;
+						force = new Vector2(2000f, 2000f);
+						Vector2 endPoint = (Vector2)transform.position +  new Vector2(-12f * direction, -8f);
+						Vector2 startPoint = (Vector2)transform.position + new Vector2(0f, -2f);
+						endRange.SendMessage("setPos", endPoint);
+						startRange.SendMessage("setPos", startPoint);
+					} 
+					else if (state.Contains("up")) {
+						damage = 0;
+						force = new Vector2(5000f, 500f);
+						Vector2 endPoint = (Vector2)transform.position +  new Vector2(8f * direction, 10f);
+						Vector2 startPoint = (Vector2)transform.position + new Vector2(-2f, -2f);
+						endRange.SendMessage("setPos", endPoint);
+						startRange.SendMessage("setPos", startPoint);
+					} 
+					// down
+					else {
+						damage = 5;
+						force = new Vector2(2000f, 2000f);
+						Vector2 endPoint = (Vector2)transform.position +  new Vector2(8f * direction, 5f);
+						Vector2 startPoint = (Vector2)transform.position + new Vector2(-2f, -2f);
+						endRange.SendMessage("setPos", endPoint);
+						startRange.SendMessage("setPos", startPoint);
+						
+					}
+				} else {
+					if (state.Contains("forward")) {
+						damage = 5;
+						force = new Vector2(2000f, 2000f);
+						Vector2 endPoint = new Vector2(transform.position.x + 12f * direction, transform.position.y);
+						Vector2 startPoint = transform.position;
+						endRange.SendMessage("setPos", endPoint);
+						startRange.SendMessage("setPos", startPoint);
+					} 
+					else if (state.Contains("up")) {
+						damage = 0;
+						force = new Vector2(0f, 0f);
+						Vector2 endPoint = new Vector2(0f, 0f);
+						Vector2 startPoint = new Vector2(0f, 0f);
+						endRange.SendMessage("setPos", endPoint);
+						startRange.SendMessage("setPos", startPoint);
+					} 
+					else {
+						damage = 5;
+						force = new Vector2(2000f, 2000f);
+						Vector2 endPoint = new Vector2(transform.position.x + 12f * direction, transform.position.y);
+						Vector2 startPoint = transform.position;
+						endRange.SendMessage("setPos", endPoint);
+						startRange.SendMessage("setPos", startPoint);
+					}
+				}
+			}
+			
+			Debug.DrawLine (startRange.position, endRange.position, Color.red);
+			RaycastHit2D castHit = Physics2D.Linecast (startRange.position, endRange.position, 1 << LayerMask.NameToLayer("Player 2"));
+			if (castHit) {
+				if (castHit.collider.gameObject != gameObject) {
+					castHit.rigidbody.AddForce (force * direction);
+					castHit.rigidbody.gameObject.SendMessage("damage", damage);
+				}
+			}
+		}
+	}
 }
+
