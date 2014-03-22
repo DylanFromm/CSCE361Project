@@ -104,6 +104,7 @@ public class PlayerController : MonoBehaviour {
      *		movement: Horizontal and Vertical Axis (X and Y Axis)
      *		control stick: Control_X and Control_Y Axis (3rd and 4th Axis)
 	 */
+	/*
 	void take_input() {
 		input = new Vector2(Input.GetAxis("Horizontal " + number), Input.GetAxis("Vertical " + number));
 		c_stick = new Vector2(Input.GetAxis("Control_X"), Input.GetAxis("Control_Y"));
@@ -126,7 +127,30 @@ public class PlayerController : MonoBehaviour {
 		}
 		//blocking = Mathf.Abs(Input.GetAxis("LT")) + Mathf.Abs(Input.GetAxis("RT"));
 	}
-	
+	*/
+	void take_input() {
+		input = new Vector2(Input.GetAxis("Horizontal " + number), Input.GetAxis("Vertical " + number));
+		c_stick = new Vector2(Input.GetAxis("Control_X"), Input.GetAxis("Control_Y"));
+		attacking = Input.GetKeyDown("joystick " + number + " button 16");
+		jumping = Input.GetKeyDown("joystick " + number + " button 18") || Input.GetKeyDown("joystick " + number + " button 19");
+		if (Input.GetKeyDown("joystick " + number + " button 17")) {
+			animationController.SetBool("special", true);
+		}
+		else if (Input.GetKeyUp("joystick " + number + " button 17")) {
+			frameBuffer = 30;
+			animationController.SetBool("special", false);
+			float rot = 0;
+			if (direction == -1) {
+				rot = 90;
+			}
+			GameObject blastObject = (GameObject)Instantiate(blast, transform.position + new Vector3(7 * direction, -3f, 0), 
+			            new Quaternion(transform.rotation.x, rot, transform.rotation.z, transform.rotation.w));
+			blastObject.GetComponent<Blast>().number = number;
+			
+		}
+		//blocking = Mathf.Abs(Input.GetAxis("LT")) + Mathf.Abs(Input.GetAxis("RT"));
+	}
+	/*
 	/**
 	 * Runs after take_input() and updates the GameObject's physics components
 	 */
