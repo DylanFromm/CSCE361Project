@@ -16,6 +16,8 @@ public class PlayerController : MonoBehaviour {
 	Vector2 inputTemp;
 	Vector2 c_stick;
 
+	public static int WhichPlayerDied = 0;
+
 	public float health = 100;
 
 	public string state;
@@ -36,6 +38,9 @@ public class PlayerController : MonoBehaviour {
 	
 	// required functions
 	void Start() {
+
+		if (number == 2)
+			direction *= -1;
 		frameBuffer = 0;
 		direction = 1;
 		animationController = GetComponent<Animator>();
@@ -59,12 +64,20 @@ public class PlayerController : MonoBehaviour {
 
 	
 	void Update() {
+
+		if (Input.GetKeyDown ("joystick button 9")) {
+			GameObject.Find("Main Camera").GetComponent<mButton>().paused = true;
+
+		}
+
 		Debug.DrawLine (startRange.position, endRange.position, Color.red);
 		if (health <= 0) {
-			// run death script		
+			WhichPlayerDied = number;
+			Application.LoadLevel("DeathScene");
 		}
 		state = "";
 		if (frameBuffer == 0) {
+			animationController.SetBool("hit", false);
 			take_input();
 			update_physics();
 		} else {
@@ -108,6 +121,25 @@ public class PlayerController : MonoBehaviour {
 		input = new Vector2(Input.GetAxis("Horizontal " + number), Input.GetAxis("Vertical " + number));
 		c_stick = new Vector2(Input.GetAxis("Control_X"), Input.GetAxis("Control_Y"));
 		attacking = Input.GetKeyDown("joystick " + number + " button 16");
+		if (number == 2) {
+			attacking = Input.GetKeyDown(KeyCode.O);
+			jumping = Input.GetKeyDown(KeyCode.P);
+			if (Input.GetKeyDown(KeyCode.I)) {
+				animationController.SetBool("special", true);
+			}
+			else if (Input.GetKeyUp(KeyCode.I)) {
+				frameBuffer = 30;
+				animationController.SetBool("special", false);
+				float rot = 0;
+				if (direction == -1) {
+					rot = 90;
+				}
+				GameObject blastObject = (GameObject)Instantiate(blast, transform.position + new Vector3(7 * direction, -3f, 0), 
+				                                                 new Quaternion(transform.rotation.x, rot, transform.rotation.z, transform.rotation.w));
+				blastObject.GetComponent<Blast>().number = number;
+				
+			}
+		}
 		jumping = Input.GetKeyDown("joystick " + number + " button 18") || Input.GetKeyDown("joystick " + number + " button 19");
 		if (Input.GetKeyDown("joystick " + number + " button 17")) {
 			animationController.SetBool("special", true);
@@ -238,6 +270,70 @@ public class PlayerController : MonoBehaviour {
 				animationController.SetInteger("x_input", 0);
 			}
 		}
+
+		if (number == 2) {
+			if (Input.GetKeyDown(KeyCode.O)) {
+				state += " attack ";
+				frameBuffer = 20;
+				
+				if ((input.x < -0.5 && direction == 1)) {
+					animationController.SetBool("attacking", true);
+					animationController.SetInteger("x_input", -1);
+					state += " back ";
+				} 
+				else if (input.x > 0.5 && (direction == -1)) {
+					animationController.SetBool("attacking", true);
+					animationController.SetInteger("x_input", -1);
+					state += " back ";
+				}
+				else if ((input.x > 0.5 && direction == 1) || (input.x < -0.5 && direction == -1)) {
+					animationController.SetBool("attacking", true);
+					animationController.SetInteger("x_input", 1);
+					state += " forward ";
+				}
+				else if (input.y > 0.5) {
+					animationController.SetInteger("y_input", 1);
+					animationController.SetBool("attacking", true);
+					state += " up ";
+					
+				}
+				// down state
+				else {
+					animationController.SetBool("attacking", true);
+					animationController.SetInteger("y_input", 0);
+					animationController.SetInteger("x_input", 0);
+				}
+			} else if (c_stick != Vector2.zero) {
+				state = "attack ";
+				if (c_stick.y < -0.5) {
+					frameBuffer = 20;
+					animationController.SetInteger("y_input", 1);
+					animationController.SetBool("attacking", true);
+				}
+				else if ((c_stick.x < -0.5 && direction == 1) || (c_stick.x > 0.5 && direction == -1)) {
+					frameBuffer = 20;
+					animationController.SetBool("attacking", true);
+					animationController.SetInteger("x_input", -1);
+					
+					state += " back ";
+					Vector2 endPoint = (Vector2)transform.position +  new Vector2(-12f * direction, -8f);
+					Vector2 startPoint = (Vector2)transform.position + new Vector2(0f, -2f);
+					endRange.SendMessage("setPos", endPoint);
+					startRange.SendMessage("setPos", startPoint);
+				}
+				else if ((c_stick.x > 0.5 && direction == 1) || (c_stick.x < -0.5 && direction == -1)) {
+					frameBuffer = 20;
+					animationController.SetBool("attacking", true);
+					animationController.SetInteger("x_input", 1);
+					state += "forward";	
+				}
+				
+			} else if (frameBuffer == 0) {
+				animationController.SetBool("attacking", false);
+				animationController.SetInteger("y_input", 0); 	
+				animationController.SetInteger("x_input", 0);
+			}
+		}
 		
 	}
 	
@@ -275,6 +371,8 @@ public class PlayerController : MonoBehaviour {
 		if (health < 0) {
 			health = 0;
 		}
+		frameBuffer = (int)amount + (int)amount;
+		animationController.SetBool ("hit", true);
 	}
 
 	void check_collision(string state_) {
@@ -345,7 +443,7 @@ public class PlayerController : MonoBehaviour {
 					} 
 					else {
 						damage = 5;
-						force = new Vector2(2000f, 2000f);
+						force = new Vector2(20000f, 2000f);
 						Vector2 endPoint = new Vector2(transform.position.x + 12f * direction, transform.position.y);
 						Vector2 startPoint = transform.position;
 						endRange.SendMessage("setPos", endPoint);
@@ -355,7 +453,7 @@ public class PlayerController : MonoBehaviour {
 			}
 			
 			Debug.DrawLine (startRange.position, endRange.position, Color.red);
-			RaycastHit2D castHit = Physics2D.Linecast (startRange.position, endRange.position, 1 << LayerMask.NameToLayer("Player 2"));
+			RaycastHit2D castHit = Physics2D.Linecast (startRange.position, endRange.position, 1 << LayerMask.NameToLayer("Player " + otherNumber));
 			if (castHit) {
 				if (castHit.collider.gameObject != gameObject) {
 					castHit.rigidbody.AddForce (force * direction);
